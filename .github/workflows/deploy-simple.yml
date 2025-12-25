@@ -1,0 +1,112 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+  APP_NAME: 'liveweb'
+  APP_DIR: '/opt/liveweb'
+  APP_PORT: '3001'
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script_stop: true
+          script: |
+            echo "🚀 Starting deployment..."
+            
+            # Create directories
+            mkdir -p /opt/liveweb/{server,frontend/dist,infrastructure,logs}
+            
+            echo "✅ Directories created"
+
+      - name: Copy files to server
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq sshpass
+          export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+          
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          # Copy server files
+          sshpass -e scp -o StrictHostKeyChecking=no -r server package.json package-lock.json server.js $SSH_USER@${{ secrets.SERVER_IP }}:/opt/liveweb/
+          
+          # Copy frontend build
+          sshpass -e scp -o StrictHostKeyChecking=no -r frontend/dist/* $SSH_USER@${{ secrets.SERVER_IP }}:/opt/liveweb/frontend/dist/
+          
+          # Copy infrastructure
+          sshpass -e scp -o StrictHostKeyChecking=no -r infrastructure $SSH_USER@${{ secrets.SERVER_IP }}:/opt/liveweb/
+
+      - name: Start application
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER || 'root' }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script: |
+            cd /opt/liveweb
+            
+            # Create .env file
+            cat > .env << 'ENVEOF'
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            PORT=3001
+            NODE_ENV=production
+            ENVEOF
+            
+            # Install PM2 if not installed
+            npm install -g pm2 || true
+            
+            # Install dependencies
+            npm install --production
+            
+            # Restart application
+            pm2 stop liveweb || true
+            pm2 delete liveweb || true
+            pm2 start server.js --name liveweb
+            pm2 save
+            
+            # Wait and check health
+            sleep 5
+            curl -f http://localhost:3001/health || echo "⚠️ Health check failed"
+            
+            pm2 status
+
+      - name: Deployment success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Application: http://${{ secrets.SERVER_IP }}:3001"
