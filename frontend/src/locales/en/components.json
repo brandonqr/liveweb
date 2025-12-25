@@ -1,0 +1,99 @@
+{
+  "apiKeys": {
+    "title": "Configure API Keys",
+    "subtitle": "Manage all your API keys. Configure required ones or add new ones for future use.",
+    "configure": "Configure",
+    "save": "Save",
+    "delete": "Delete Key",
+    "close": "Close",
+    "placeholder": "Enter your {{apiName}} API key",
+    "saved": "Configured",
+    "deleted": "API key deleted",
+    "required": "An API key is required to use",
+    "optional": "Optional",
+    "docs": "Get Key",
+    "noApis": "No APIs available",
+    "loading": "Saving...",
+    "security": "⚠️ Security:",
+    "securityMessage": "API keys are stored locally in your browser. Do not share them or expose them publicly.",
+    "apisDetected": "{{count}} API(s) detected without configuration. Panel opened automatically.",
+    "apisDetectedManual": "{{count}} API(s) detected without configuration. Use the \"API Keys\" button to configure them.",
+    "apisConfigured": "All detected APIs have keys configured",
+    "configureKeys": "Configure API keys for the application to work correctly"
+  },
+  "checkpoints": {
+    "title": "Version History",
+    "subtitle": "Navigate through previous versions",
+    "close": "Close panel",
+    "restore": "Restore",
+    "noVersions": "No versions yet",
+    "noVersionsDesc": "Versions will appear here when you generate code",
+    "count": "{{count}} checkpoint",
+    "count_plural": "{{count}} checkpoints",
+    "active": "Active",
+    "timeAgo": {
+      "moment": "A moment ago",
+      "minutes": "{{count}} min ago",
+      "hours": "{{count}}h ago",
+      "days": "{{count}}d ago"
+    }
+  },
+  "templates": {
+    "title": "Templates",
+    "subtitle": "Pre-generated templates",
+    "close": "Close panel",
+    "apply": "Apply",
+    "noTemplates": "No templates available",
+    "footer": "Say \"create a [type]\" to use templates"
+  },
+  "toast": {
+    "close": "Close"
+  },
+  "voice": {
+    "createHint": "to create with voice",
+    "editHint": "to edit with voice",
+    "tooltipCreate": "Create application with voice",
+    "tooltipEdit": "Edit application with voice",
+    "welcomeTitle": "Application created!",
+    "welcomeMessage": "You can now continue editing with voice. Press T or click the microphone.",
+    "gotIt": "Got it"
+  },
+  "codeRenderer": {
+    "selecting": "Selecting element...",
+    "clickToSelect": "Click on an element to select it"
+  },
+  "loader": {
+    "generating": "Generating code with Gemini 3 Flash..."
+  },
+  "emptyState": {
+    "title": "Welcome to Gemini 3 Flash Builder!",
+    "subtitle": "Create amazing web applications by simply describing what you want. Use your voice, select an example, or explore our templates.",
+    "examplesTitle": "Examples to get started",
+    "clickToTry": "Click to try",
+    "tip": "💡 Tip: Press 'T' to activate voice recognition or click any example to get started",
+    "actions": {
+      "speak": "Speak now",
+      "templates": "View Templates"
+    },
+    "categories": {
+      "web": "Web",
+      "data": "Data",
+      "forms": "Forms",
+      "maps": "Maps",
+      "media": "Media",
+      "business": "Business",
+      "ai": "AI",
+      "social": "Social"
+    },
+    "examples": {
+      "landing": "Create a modern landing page with hero section",
+      "dashboard": "Generate a dashboard with charts and metrics",
+      "form": "Design a contact form with validation",
+      "map": "Build an application with interactive map",
+      "gallery": "Create an image gallery with lightbox",
+      "pricing": "Generate a pricing page with comparison",
+      "chat": "Create an intelligent chat with Gemini with a modern design",
+      "reddit": "Create a Reddit clone with posts, comments and votes"
+    }
+  }
+}

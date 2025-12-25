@@ -1,0 +1,99 @@
+{
+  "apiKeys": {
+    "title": "Configurar API Keys",
+    "subtitle": "Gestiona todas tus API keys. Configura las requeridas o agrega nuevas para uso futuro.",
+    "configure": "Configurar",
+    "save": "Guardar",
+    "delete": "Eliminar Key",
+    "close": "Cerrar",
+    "placeholder": "Ingresa tu {{apiName}} API key",
+    "saved": "Configurada",
+    "deleted": "API key eliminada",
+    "required": "Se requiere una API key para usar",
+    "optional": "Opcional",
+    "docs": "Obtener Key",
+    "noApis": "No hay APIs disponibles",
+    "loading": "Guardando...",
+    "security": "⚠️ Seguridad:",
+    "securityMessage": "Las API keys se almacenan localmente en tu navegador. No las compartas ni las expongas públicamente.",
+    "apisDetected": "Se detectaron {{count}} API(s) sin configurar. Panel abierto automáticamente.",
+    "apisDetectedManual": "Se detectaron {{count}} API(s) sin configurar. Usa el botón \"API Keys\" para configurarlas.",
+    "apisConfigured": "Todas las APIs detectadas tienen keys configuradas",
+    "configureKeys": "Configura las API keys para que la aplicación funcione correctamente"
+  },
+  "checkpoints": {
+    "title": "Historial de Versiones",
+    "subtitle": "Navega entre versiones anteriores",
+    "close": "Cerrar panel",
+    "restore": "Restaurar",
+    "noVersions": "No hay versiones aún",
+    "noVersionsDesc": "Las versiones aparecerán aquí cuando generes código",
+    "count": "{{count}} checkpoint",
+    "count_plural": "{{count}} checkpoints",
+    "active": "Activa",
+    "timeAgo": {
+      "moment": "Hace un momento",
+      "minutes": "Hace {{count}} min",
+      "hours": "Hace {{count}}h",
+      "days": "Hace {{count}}d"
+    }
+  },
+  "templates": {
+    "title": "Templates",
+    "subtitle": "Plantillas pre-generadas",
+    "close": "Cerrar panel",
+    "apply": "Aplicar",
+    "noTemplates": "No hay templates disponibles",
+    "footer": "Di \"crea un [tipo]\" para usar templates"
+  },
+  "toast": {
+    "close": "Cerrar"
+  },
+  "voice": {
+    "createHint": "para crear con voz",
+    "editHint": "para editar con voz",
+    "tooltipCreate": "Crear aplicación con voz",
+    "tooltipEdit": "Editar aplicación con voz",
+    "welcomeTitle": "¡Aplicación creada!",
+    "welcomeMessage": "Ahora puedes seguir editando con voz. Presiona T o haz clic en el micrófono.",
+    "gotIt": "Entendido"
+  },
+  "codeRenderer": {
+    "selecting": "Seleccionando elemento...",
+    "clickToSelect": "Haz clic en un elemento para seleccionarlo"
+  },
+  "loader": {
+    "generating": "Generando código con Gemini 3 Flash..."
+  },
+  "emptyState": {
+    "title": "¡Bienvenido a Gemini 3 Flash Builder!",
+    "subtitle": "Crea aplicaciones web increíbles con solo describir lo que quieres. Usa tu voz, selecciona un ejemplo o explora nuestros templates.",
+    "examplesTitle": "Ejemplos para empezar",
+    "clickToTry": "Clic para probar",
+    "tip": "💡 Tip: Presiona 'T' para activar el reconocimiento de voz o haz clic en cualquier ejemplo para empezar",
+    "actions": {
+      "speak": "Hablar ahora",
+      "templates": "Ver Templates"
+    },
+    "categories": {
+      "web": "Web",
+      "data": "Datos",
+      "forms": "Formularios",
+      "maps": "Mapas",
+      "media": "Media",
+      "business": "Negocios",
+      "ai": "IA",
+      "social": "Social"
+    },
+    "examples": {
+      "landing": "Crea una landing page moderna con hero section",
+      "dashboard": "Genera un dashboard con gráficos y métricas",
+      "form": "Diseña un formulario de contacto con validación",
+      "map": "Construye una aplicación con mapa interactivo",
+      "gallery": "Crea una galería de imágenes con lightbox",
+      "pricing": "Genera una página de precios con comparación",
+      "chat": "Crea un chat inteligente con Gemini que tenga un diseño moderno",
+      "reddit": "Crea un clon de Reddit con posts, comentarios y votos"
+    }
+  }
+}

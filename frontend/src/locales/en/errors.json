@@ -1,0 +1,13 @@
+{
+  "networkError": "Network error: Could not connect to the server. Make sure the backend is running on port 3000",
+  "timeout": "Request timeout: Generation is taking longer than expected. Please try with a simpler prompt or wait a moment.",
+  "connectionGemini": "Error connecting to Gemini",
+  "voiceRecognition": "Voice recognition error: {{error}}",
+  "downloadZip": "Error generating ZIP file: {{message}}",
+  "loadingTemplates": "Error loading templates",
+  "loadingCheckpoints": "Error loading checkpoints",
+  "restoringCheckpoint": "Error restoring checkpoint",
+  "loadingTemplate": "Error loading template",
+  "savingApiKey": "Error saving API key",
+  "loadingApis": "Error loading available APIs"
+}

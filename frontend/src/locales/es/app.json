@@ -1,0 +1,45 @@
+{
+  "title": "Gemini 3 Flash Builder",
+  "status": {
+    "ready": "Listo",
+    "listening": "Escuchando...",
+    "updated": "Actualizado",
+    "processing": "Procesando: \"{{command}}\"...",
+    "error": "Error: {{message}}"
+  },
+  "buttons": {
+    "select": "Seleccionar",
+    "editComponent": "Editar Componente",
+    "cancel": "Cancelar",
+    "templates": "Templates",
+    "history": "Historial",
+    "apiKeys": "API Keys",
+    "download": "Descargar",
+    "speak": "Hablar (T)",
+    "stop": "Parar"
+  },
+  "titles": {
+    "selectComponent": "Seleccionar componente para editar",
+    "viewTemplates": "Ver templates disponibles",
+    "viewHistory": "Ver historial de versiones",
+    "configureApiKeys": "Configurar API Keys",
+    "downloadCode": "Descargar código como ZIP",
+    "goHome": "Volver al inicio"
+  },
+  "messages": {
+    "templateApplied": "Template \"{{name}}\" aplicado",
+    "versionRestored": "Versión restaurada",
+    "componentSelected": "Componente seleccionado: {{tagName}}",
+    "generatingCode": "Generando código con Gemini 3 Flash...",
+    "speechNotSupported": "Speech Recognition no soportado",
+    "componentSelectedBadge": "{{tagName}} seleccionado",
+    "errorConnectingGemini": "Error al conectar con Gemini",
+    "codeRendered": "Código renderizado en iframe",
+    "componentSelectionCleared": "Selección de componente limpiada",
+    "navigatedToHome": "Navegado al inicio"
+  },
+  "history": {
+    "count": "{{count}}",
+    "count_plural": "{{count}}"
+  }
+}

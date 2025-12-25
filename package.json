@@ -1,0 +1,42 @@
+{
+  "name": "liveweb",
+  "version": "1.0.0",
+  "description": "AI-powered web builder using voice commands and Google Gemini 3 Flash. Build complete web applications by speaking naturally.",
+  "type": "module",
+  "main": "server.js",
+  "author": "LiveWeb Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/liveweb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/liveweb/issues"
+  },
+  "homepage": "https://github.com/yourusername/liveweb#readme",
+  "keywords": [
+    "ai",
+    "gemini",
+    "gemini-3-flash",
+    "voice-recognition",
+    "web-builder",
+    "code-generation",
+    "react",
+    "nodejs",
+    "express",
+    "vite",
+    "speech-recognition",
+    "ai-assistant",
+    "web-development"
+  ],
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  }
+}

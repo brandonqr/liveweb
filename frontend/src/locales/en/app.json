@@ -1,0 +1,45 @@
+{
+  "title": "Gemini 3 Flash Builder",
+  "status": {
+    "ready": "Ready",
+    "listening": "Listening...",
+    "updated": "Updated",
+    "processing": "Processing: \"{{command}}\"...",
+    "error": "Error: {{message}}"
+  },
+  "buttons": {
+    "select": "Select",
+    "editComponent": "Edit Component",
+    "cancel": "Cancel",
+    "templates": "Templates",
+    "history": "History",
+    "apiKeys": "API Keys",
+    "download": "Download",
+    "speak": "Speak (T)",
+    "stop": "Stop"
+  },
+  "titles": {
+    "selectComponent": "Select component to edit",
+    "viewTemplates": "View available templates",
+    "viewHistory": "View version history",
+    "configureApiKeys": "Configure API Keys",
+    "downloadCode": "Download code as ZIP",
+    "goHome": "Go to home"
+  },
+  "messages": {
+    "templateApplied": "Template \"{{name}}\" applied",
+    "versionRestored": "Version restored",
+    "componentSelected": "Component selected: {{tagName}}",
+    "generatingCode": "Generating code with Gemini 3 Flash...",
+    "speechNotSupported": "Speech Recognition not supported",
+    "componentSelectedBadge": "{{tagName}} selected",
+    "errorConnectingGemini": "Error connecting to Gemini",
+    "codeRendered": "Code rendered in iframe",
+    "componentSelectionCleared": "Component selection cleared",
+    "navigatedToHome": "Navigated to home"
+  },
+  "history": {
+    "count": "{{count}}",
+    "count_plural": "{{count}}"
+  }
+}
