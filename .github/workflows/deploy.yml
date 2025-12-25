@@ -1,0 +1,338 @@
+name: Deploy LiveWeb to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+  APP_NAME: 'liveweb'
+  APP_DIR: '/opt/liveweb'
+  APP_PORT: '3001'  # Changed from 3000 to avoid conflict with latoxicatst-frontend
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run frontend linter
+        working-directory: ./frontend
+        run: npm run lint || echo "Linter found issues but continuing..."
+        continue-on-error: true
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://localhost:3000' }}
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "frontend/dist" ]; then
+            echo "❌ Frontend build failed - dist directory not found"
+            exit 1
+          fi
+          echo "✅ Frontend build successful"
+          ls -lah frontend/dist/
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: needs.build-and-test.result == 'success' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH and install sshpass
+        run: |
+          set -x
+          
+          if [ -z "${{ secrets.SERVER_IP }}" ]; then
+            echo "❌ ERROR: SERVER_IP secret is not set!"
+            exit 1
+          fi
+          echo "✅ Server IP: ${{ secrets.SERVER_IP }}"
+          
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+            echo "⚠️  SERVER_USER not set, using default: root"
+          else
+            echo "✅ Using SSH user: $SSH_USER"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            echo "🔑 Using SSH key authentication"
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts 2>/dev/null || true
+            SSH_TEST="ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o ConnectTimeout=30 $SSH_USER@${{ secrets.SERVER_IP }}"
+            SSH_CMD="ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@${{ secrets.SERVER_IP }}"
+          else
+            echo "🔑 Using password authentication"
+            sudo apt-get update -qq || true
+            sudo apt-get install -y -qq sshpass || { echo "❌ Failed to install sshpass"; exit 1; }
+            
+            if [ -z "${{ secrets.SERVER_PASSWORD }}" ]; then
+              echo "❌ ERROR: SERVER_PASSWORD secret is not set!"
+              exit 1
+            fi
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_TEST="sshpass -e ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 $SSH_USER@${{ secrets.SERVER_IP }}"
+            SSH_CMD="sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@${{ secrets.SERVER_IP }}"
+          fi
+          
+          mkdir -p ~/.ssh
+          cat >> ~/.ssh/config << EOF
+          Host ${{ secrets.SERVER_IP }}
+            ControlMaster auto
+            ControlPath ~/.ssh/control-%h-%p-%r
+            ControlPersist 10m
+            ServerAliveInterval 60
+            ServerAliveCountMax 3
+            ConnectTimeout 30
+            StrictHostKeyChecking no
+          EOF
+          chmod 600 ~/.ssh/config
+          
+          echo "🔍 Testing SSH connection..."
+          MAX_RETRIES=5
+          RETRY_DELAY=5
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "🔄 SSH Connection Attempt $i/$MAX_RETRIES"
+            if $SSH_TEST "echo 'SSH connection successful'" 2>&1; then
+              echo "✅ SSH connection successful!"
+              break
+            else
+              if [ $i -eq $MAX_RETRIES ]; then
+                echo "❌ SSH connection failed after $MAX_RETRIES attempts"
+                exit 1
+              fi
+              echo "⏳ Waiting ${RETRY_DELAY}s before retry..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          
+          echo "✅ SSH setup completed successfully"
+
+      - name: Prepare server directories
+        run: |
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            SSH_CMD="ssh -i ~/.ssh/id_rsa $SSH_USER@${{ secrets.SERVER_IP }}"
+          else
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_CMD="sshpass -e ssh $SSH_USER@${{ secrets.SERVER_IP }}"
+          fi
+          
+          echo "Creating directories on server..."
+          $SSH_CMD "mkdir -p ${{ env.APP_DIR }}/infrastructure ${{ env.APP_DIR }}/backups ${{ env.APP_DIR }}/server ${{ env.APP_DIR }}/frontend/dist ${{ env.APP_DIR }}/logs && chmod 755 ${{ env.APP_DIR }} && ls -la ${{ env.APP_DIR }}/" || {
+            echo "⚠️ Directory creation failed, retrying..."
+            sleep 5
+            $SSH_CMD "mkdir -p ${{ env.APP_DIR }}/infrastructure ${{ env.APP_DIR }}/backups ${{ env.APP_DIR }}/server ${{ env.APP_DIR }}/frontend/dist ${{ env.APP_DIR }}/logs && chmod 755 ${{ env.APP_DIR }}"
+          }
+          echo "✅ Directory preparation completed"
+        continue-on-error: true
+
+      - name: Clean application code on server
+        run: |
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            SSH_CMD="ssh -i ~/.ssh/id_rsa $SSH_USER@${{ secrets.SERVER_IP }}"
+          else
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_CMD="sshpass -e ssh $SSH_USER@${{ secrets.SERVER_IP }}"
+          fi
+          
+          echo "Cleaning old application code on server..."
+          $SSH_CMD "rm -rf ${{ env.APP_DIR }}/server ${{ env.APP_DIR }}/frontend/dist && mkdir -p ${{ env.APP_DIR }}/server ${{ env.APP_DIR }}/frontend/dist && ls -la ${{ env.APP_DIR }}"
+
+      - name: Copy files to server
+        run: |
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            SSH_CMD="ssh -i ~/.ssh/id_rsa $SSH_USER@${{ secrets.SERVER_IP }}"
+            SCP_CMD="scp -i ~/.ssh/id_rsa"
+          else
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_CMD="sshpass -e ssh $SSH_USER@${{ secrets.SERVER_IP }}"
+            SCP_CMD="sshpass -e scp"
+          fi
+          
+          set +e
+          
+          echo "Copying infrastructure files..."
+          if [ -d "infrastructure" ] && [ "$(ls -A infrastructure 2>/dev/null)" ]; then
+            $SCP_CMD -r infrastructure/* $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/infrastructure/ || echo "Warning: Some infrastructure files may have failed to copy"
+          else
+            echo "Warning: infrastructure directory is empty or doesn't exist"
+          fi
+          
+          echo "Copying root files..."
+          [ -f "docker-compose.yml" ] && $SCP_CMD docker-compose.yml $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/ || echo "docker-compose.yml not found"
+          [ -f "Dockerfile" ] && $SCP_CMD Dockerfile $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/ || echo "Dockerfile not found"
+          [ -f "package.json" ] && $SCP_CMD package*.json $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/ || echo "package.json not found"
+          [ -f "server.js" ] && $SCP_CMD server.js $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/ || echo "server.js not found"
+          
+          echo "Copying server directory..."
+          $SCP_CMD -r server $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/ || echo "server directory copy failed"
+          
+          echo "Copying frontend build..."
+          $SCP_CMD -r frontend/dist/* $SSH_USER@${{ secrets.SERVER_IP }}:${{ env.APP_DIR }}/frontend/dist/ || echo "frontend/dist copy failed"
+          
+          set -e
+          
+          echo "Verifying files..."
+          $SSH_CMD "ls -la ${{ env.APP_DIR }}/ | head -15" || echo "Directory listing failed"
+
+      - name: Create .env file on server
+        run: |
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            SSH_CMD="ssh -i ~/.ssh/id_rsa $SSH_USER@${{ secrets.SERVER_IP }}"
+          else
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_CMD="sshpass -e ssh $SSH_USER@${{ secrets.SERVER_IP }}"
+          fi
+          
+          API_BASE_URL="${{ secrets.API_BASE_URL }}"
+          if [ -z "$API_BASE_URL" ]; then
+            if [ -n "${{ secrets.DOMAIN }}" ]; then
+              API_BASE_URL="https://${{ secrets.DOMAIN }}"
+            else
+              API_BASE_URL="http://${{ secrets.SERVER_IP }}:${{ env.APP_PORT }}"
+            fi
+          fi
+          
+          APP_PORT="${{ secrets.APP_PORT || env.APP_PORT }}"
+          
+          echo "Creating .env file on server..."
+          $SSH_CMD "cat > ${{ env.APP_DIR }}/.env << 'ENVEOF'
+GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+PORT=$APP_PORT
+NODE_ENV=production
+API_BASE_URL=$API_BASE_URL
+DOMAIN=${{ secrets.DOMAIN || '' }}
+ENVEOF" || {
+            echo "⚠️ Failed to create .env via heredoc, trying alternative method..."
+            $SSH_CMD "printf 'GEMINI_API_KEY=%s\nPORT=%s\nNODE_ENV=production\nAPI_BASE_URL=%s\nDOMAIN=%s\n' '${{ secrets.GEMINI_API_KEY }}' '$APP_PORT' '$API_BASE_URL' '${{ secrets.DOMAIN || '' }}' > ${{ env.APP_DIR }}/.env" || echo "Warning: .env creation failed"
+          }
+          
+          $SSH_CMD "test -f ${{ env.APP_DIR }}/.env && echo '✅ .env file created' || echo '⚠️ .env file not found'"
+        continue-on-error: true
+
+      - name: Deploy application
+        timeout-minutes: 15
+        run: |
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            SSH_CMD="ssh -i ~/.ssh/id_rsa $SSH_USER@${{ secrets.SERVER_IP }}"
+          else
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_CMD="sshpass -e ssh $SSH_USER@${{ secrets.SERVER_IP }}"
+          fi
+          
+          echo "Executing deployment..."
+          $SSH_CMD "cd ${{ env.APP_DIR }}/infrastructure && chmod +x scripts/*.sh 2>/dev/null && ./scripts/deploy.sh" || {
+            echo "⚠️ Deployment script not found or failed, using manual deployment..."
+            
+            $SSH_CMD "cd ${{ env.APP_DIR }} && \
+              npm install --production && \
+              pm2 stop ${{ env.APP_NAME }} || true && \
+              pm2 delete ${{ env.APP_NAME }} || true && \
+              pm2 start server.js --name ${{ env.APP_NAME }} --update-env && \
+              pm2 save"
+          }
+
+      - name: Verify deployment
+        run: |
+          SSH_USER="${{ secrets.SERVER_USER }}"
+          if [ -z "$SSH_USER" ]; then
+            SSH_USER="root"
+          fi
+          
+          if [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
+            SSH_CMD="ssh -i ~/.ssh/id_rsa $SSH_USER@${{ secrets.SERVER_IP }}"
+          else
+            export SSHPASS="${{ secrets.SERVER_PASSWORD }}"
+            SSH_CMD="sshpass -e ssh $SSH_USER@${{ secrets.SERVER_IP }}"
+          fi
+          
+          echo "Waiting for services to start..."
+          sleep 10
+          
+          echo "Checking backend health..."
+          APP_PORT="${{ secrets.APP_PORT || env.APP_PORT }}"
+          BACKEND_URL="http://${{ secrets.SERVER_IP }}:$APP_PORT"
+          curl -f $BACKEND_URL/health || {
+            echo "⚠️ Backend health check failed, checking PM2 status..."
+            $SSH_CMD "pm2 status"
+            exit 1
+          }
+          
+          echo "✅ Deployment verified successfully"
+
+      - name: Deployment notification
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          APP_PORT="${{ secrets.APP_PORT || env.APP_PORT }}"
+          echo "Backend API: http://${{ secrets.SERVER_IP }}:$APP_PORT"
+          if [ -n "${{ secrets.DOMAIN }}" ]; then
+            echo "Frontend: https://${{ secrets.DOMAIN }}"
+          else
+            echo "Frontend: http://${{ secrets.SERVER_IP }}:$APP_PORT (served by backend)"
+          fi
+
+      - name: Deployment failure notification
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          exit 1
