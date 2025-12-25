@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/brandonqr/liveweb/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📚 Documentation
+    url: https://github.com/brandonqr/liveweb#readme
+    about: Check our documentation for answers
+  - name: 🐛 Bug Report
+    url: https://github.com/brandonqr/liveweb/issues/new?template=bug_report.md
+    about: Report a bug or issue
+  - name: 💡 Feature Request
+    url: https://github.com/brandonqr/liveweb/issues/new?template=feature_request.md
+    about: Suggest a new feature

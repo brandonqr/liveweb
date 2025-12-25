@@ -3,13 +3,15 @@
 <div align="center">
 
 ![LiveWeb Banner](https://img.shields.io/badge/Gemini-3_Flash-blue?style=for-the-badge&logo=google&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-18+-green?style=for-the-badge&logo=node.js&logoColor=white)
-![React](https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-22+-green?style=for-the-badge&logo=node.js&logoColor=white)
+![React](https://img.shields.io/badge/React-19+-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+![GitHub](https://img.shields.io/github/stars/brandonqr/liveweb?style=for-the-badge&logo=github&color=blue)
+![GitHub](https://img.shields.io/github/forks/brandonqr/liveweb?style=for-the-badge&logo=github&color=blue)
 
 **Build complete web applications with your voice using Google Gemini 3 Flash**
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Examples](#-examples) • [Contributing](#-contributing)
+[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Examples](#-examples) • [Contributing](#-contributing) • [Deployment](#-deployment)
 
 </div>
 
@@ -471,6 +473,30 @@ chore: update dependencies
 
 ---
 
+## 🚀 Deployment
+
+LiveWeb includes comprehensive deployment infrastructure for production environments.
+
+### Quick Deployment
+
+1. **Configure GitHub Secrets** (see [SECRETS_SETUP.md](.github/SECRETS_SETUP.md))
+2. **Push to main branch** - Automatic deployment via GitHub Actions
+3. **Or manually deploy** using PM2 or Docker (see [DEPLOYMENT.md](DEPLOYMENT.md))
+
+### Deployment Options
+
+- **GitHub Actions**: Automated CI/CD pipeline
+- **PM2**: Process manager for Node.js
+- **Docker**: Containerized deployment
+- **Nginx**: Reverse proxy for custom domains
+
+For detailed deployment instructions, see:
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
+- [DEPLOYMENT_SETUP.md](DEPLOYMENT_SETUP.md) - Setup instructions
+- [PORT_CONFIGURATION.md](PORT_CONFIGURATION.md) - Port configuration
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -489,9 +515,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/liveweb/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/liveweb/discussions)
-- 📧 **Email**: your.email@example.com
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/brandonqr/liveweb/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/brandonqr/liveweb/discussions)
+- 📚 **Documentation**: [Full Documentation](https://github.com/brandonqr/liveweb#readme)
 
 ---
 
