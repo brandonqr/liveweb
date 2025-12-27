@@ -9,7 +9,18 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Build stage
+# Build stage - Build frontend
+FROM base AS frontend-builder
+WORKDIR /app/frontend
+
+# Copy frontend files
+COPY frontend/package*.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
+# Build stage - Backend
 FROM base AS builder
 WORKDIR /app
 
@@ -33,10 +44,8 @@ COPY server.js ./
 COPY server ./server
 COPY package.json ./
 
-# Copy frontend build (must exist - built in workflow before Docker build)
-# Create directory structure first
-RUN mkdir -p ./frontend/dist
-COPY frontend/dist ./frontend/dist
+# Copy frontend build from frontend-builder stage
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
