@@ -2,20 +2,17 @@ version: '3.8'
 
 services:
   liveweb-backend:
-    # Use image from registry (set in workflow) or build locally
+    # Image will be set by deployment workflow
     image: ${DOCKER_IMAGE:-ghcr.io/brandonqr/liveweb:latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: liveweb-backend
     restart: unless-stopped
     ports:
-      - "${BACKEND_PORT:-3001}:3001"  # Changed from 3000 to avoid conflict with latoxicatst-frontend
+      - "${BACKEND_PORT:-3001}:3001"
     environment:
       - NODE_ENV=production
       - PORT=3001
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - API_BASE_URL=${API_BASE_URL:-http://localhost:3000}
+      - API_BASE_URL=${API_BASE_URL:-http://localhost:3001}
     env_file:
       - .env
     volumes:

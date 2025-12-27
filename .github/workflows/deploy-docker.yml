@@ -143,25 +143,33 @@ jobs:
             ENVEOF
             
             # Stop existing containers
-            docker-compose down || true
+            docker compose down || true
             
             # Pull latest image (if not already pulled)
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || true
             
-            # Update docker-compose.yml to use the image
-            sed -i "s|build:|# build:|g" docker-compose.yml || true
-            sed -i "s|dockerfile: Dockerfile|# dockerfile: Dockerfile|g" docker-compose.yml || true
-            sed -i "/liveweb-backend:/a\    image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" docker-compose.yml || true
+            # Ensure docker-compose.yml is clean and correct
+            # Remove any duplicate image lines and ensure only one image is set
+            if grep -q "^    image:" docker-compose.yml; then
+              # Remove old image lines and add the correct one
+              sed -i '/^    image:/d' docker-compose.yml
+            fi
+            # Add image line after liveweb-backend: line
+            sed -i "/^  liveweb-backend:/a\    image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" docker-compose.yml
+            # Comment out build section if it exists
+            sed -i "s|^    build:|    # build:|g" docker-compose.yml || true
+            sed -i "s|^      context:|      # context:|g" docker-compose.yml || true
+            sed -i "s|^      dockerfile:|      # dockerfile:|g" docker-compose.yml || true
             
             # Start containers with health check wait
-            docker-compose up -d --force-recreate --remove-orphans
+            docker compose up -d --force-recreate --remove-orphans
             
             # Wait for services to be healthy
             echo "⏳ Waiting for services to start and become healthy..."
             MAX_WAIT=60
             WAIT_COUNT=0
             while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-              if docker-compose ps | grep -q "liveweb-backend.*healthy"; then
+              if docker compose ps | grep -q "liveweb-backend.*healthy"; then
                 echo "✅ Backend is healthy!"
                 break
               fi
@@ -172,20 +180,20 @@ jobs:
             
             # Verify deployment
             echo "📊 Container status:"
-            docker-compose ps
+            docker compose ps
             
             echo "📋 Recent backend logs:"
-            docker-compose logs --tail=50 liveweb-backend || true
+            docker compose logs --tail=50 liveweb-backend || true
             
             # Check if frontend files exist in container
             echo "📁 Checking frontend files in container..."
-            docker-compose exec -T liveweb-backend ls -la /app/frontend/dist/ 2>/dev/null || echo "⚠️ Could not list frontend files"
+            docker compose exec -T liveweb-backend ls -la /app/frontend/dist/ 2>/dev/null || echo "⚠️ Could not list frontend files"
             
             # Check what's actually in the container
             echo "📂 Container file structure:"
-            docker-compose exec -T liveweb-backend find /app -type f -name "*.html" 2>/dev/null | head -10 || echo "⚠️ Could not search files"
-            docker-compose exec -T liveweb-backend pwd 2>/dev/null || echo "⚠️ Could not get working directory"
-            docker-compose exec -T liveweb-backend ls -la /app/ 2>/dev/null || echo "⚠️ Could not list /app"
+            docker compose exec -T liveweb-backend find /app -type f -name "*.html" 2>/dev/null | head -10 || echo "⚠️ Could not search files"
+            docker compose exec -T liveweb-backend pwd 2>/dev/null || echo "⚠️ Could not get working directory"
+            docker compose exec -T liveweb-backend ls -la /app/ 2>/dev/null || echo "⚠️ Could not list /app"
             
             # Health check
             echo "🏥 Running health check..."
@@ -193,7 +201,7 @@ jobs:
               echo "✅ Backend health check passed"
             else
               echo "⚠️ Backend health check failed, but deployment may still be in progress"
-              docker-compose ps
+              docker compose ps
             fi
             
             # Test root endpoint
@@ -209,7 +217,7 @@ jobs:
             
             # Check if server is actually listening
             echo "🔌 Checking if server is listening on port 3001..."
-            docker-compose exec -T liveweb-backend netstat -tuln 2>/dev/null | grep 3001 || docker-compose exec -T liveweb-backend ss -tuln 2>/dev/null | grep 3001 || echo "⚠️ Could not check listening ports"
+            docker compose exec -T liveweb-backend netstat -tuln 2>/dev/null | grep 3001 || docker compose exec -T liveweb-backend ss -tuln 2>/dev/null | grep 3001 || echo "⚠️ Could not check listening ports"
             
             echo "✅ Deployment completed!"
 

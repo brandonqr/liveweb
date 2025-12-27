@@ -26,14 +26,14 @@ jobs:
             # 1. Check Docker
             echo "1️⃣ Docker Status:"
             docker --version || echo "❌ Docker not installed"
-            docker-compose --version || echo "❌ Docker Compose not installed"
+            docker compose version || echo "❌ Docker Compose not installed"
             echo ""
             
             # 2. Check containers
             echo "2️⃣ Container Status:"
             cd /opt/liveweb 2>/dev/null || echo "❌ /opt/liveweb not found"
             if [ -d "/opt/liveweb" ]; then
-              docker-compose ps || echo "⚠️ docker-compose not configured"
+              docker compose ps || echo "⚠️ docker compose not configured"
               echo ""
               
               # 3. Check backend container
@@ -43,7 +43,7 @@ jobs:
               
               # 4. Backend logs
               echo "4️⃣ Backend Logs (last 50 lines):"
-              docker-compose logs --tail=50 liveweb-backend 2>/dev/null || docker logs liveweb-backend --tail=50 2>/dev/null || echo "❌ Could not get logs"
+              docker compose logs --tail=50 liveweb-backend 2>/dev/null || docker logs liveweb-backend --tail=50 2>/dev/null || echo "❌ Could not get logs"
               echo ""
               
               # 5. Check if container is running
