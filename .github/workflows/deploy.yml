@@ -47,7 +47,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build
         env:
-          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://localhost:3000' }}
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://localhost:3001' }}
 
       - name: Verify build output
         run: |
@@ -74,6 +74,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
 
       - name: Setup SSH and install sshpass
         run: |
