@@ -58,6 +58,13 @@ jobs:
           echo "✅ Frontend build successful"
           ls -lah frontend/dist/
 
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 1
+
   deploy:
     name: Deploy to Server
     needs: build-and-test
