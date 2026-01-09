@@ -46,16 +46,52 @@ mkdir -p /var/www/certbot
 if [ -f "$NGINX_SITES_AVAILABLE/liveweb" ]; then
     echo "✅ Nginx configuration already exists, using it..."
     echo "   Certbot will automatically modify it to add SSL"
-else
-    # Copy and customize Nginx config (only if it doesn't exist)
-    echo "📝 Creating Nginx configuration..."
-    if [ -f "$APP_DIR/infrastructure/nginx/liveweb-docker.conf" ]; then
-        CONFIG_SOURCE="$APP_DIR/infrastructure/nginx/liveweb-docker.conf"
-    else
-        CONFIG_SOURCE="$APP_DIR/infrastructure/nginx/liveweb.conf"
-    fi
     
-    sed "s/YOUR_DOMAIN.com/$DOMAIN/g" "$CONFIG_SOURCE" > "$NGINX_SITES_AVAILABLE/liveweb"
+    # Verify the config is valid (HTTP only, before SSL)
+    echo "🧪 Testing existing Nginx configuration..."
+    nginx -t || {
+        echo "⚠️  Existing config has issues, but continuing with certbot..."
+    }
+else
+    # If config doesn't exist, create a basic HTTP-only config for Let's Encrypt
+    echo "📝 Creating basic HTTP-only Nginx configuration for Let's Encrypt..."
+    cat > "$NGINX_SITES_AVAILABLE/liveweb" << NGINXEOF
+upstream liveweb_backend {
+    server 127.0.0.1:3001;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN} www.${DOMAIN};
+    
+    # Let's Encrypt challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    
+    # IMPORTANTE: Permitir uploads de archivos grandes
+    client_max_body_size 10M;
+    
+    # Proxy ALL requests to Docker container
+    location / {
+        proxy_pass http://liveweb_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+        
+        # SSE support
+        proxy_buffering off;
+        proxy_read_timeout 86400;
+    }
+}
+NGINXEOF
     
     # Create symlink
     if [ -L "$NGINX_SITES_ENABLED/liveweb" ]; then
