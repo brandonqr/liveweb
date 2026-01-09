@@ -42,42 +42,52 @@ fi
 # Create directory for Let's Encrypt challenge
 mkdir -p /var/www/certbot
 
-# Copy and customize Nginx config
-echo "📝 Creating Nginx configuration..."
-if [ -f "$APP_DIR/infrastructure/nginx/liveweb-docker.conf" ]; then
-    CONFIG_SOURCE="$APP_DIR/infrastructure/nginx/liveweb-docker.conf"
+# Check if nginx config already exists (from setup-nginx-proxy.sh)
+if [ -f "$NGINX_SITES_AVAILABLE/liveweb" ]; then
+    echo "✅ Nginx configuration already exists, using it..."
+    echo "   Certbot will automatically modify it to add SSL"
 else
-    CONFIG_SOURCE="$APP_DIR/infrastructure/nginx/liveweb.conf"
+    # Copy and customize Nginx config (only if it doesn't exist)
+    echo "📝 Creating Nginx configuration..."
+    if [ -f "$APP_DIR/infrastructure/nginx/liveweb-docker.conf" ]; then
+        CONFIG_SOURCE="$APP_DIR/infrastructure/nginx/liveweb-docker.conf"
+    else
+        CONFIG_SOURCE="$APP_DIR/infrastructure/nginx/liveweb.conf"
+    fi
+    
+    sed "s/YOUR_DOMAIN.com/$DOMAIN/g" "$CONFIG_SOURCE" > "$NGINX_SITES_AVAILABLE/liveweb"
+    
+    # Create symlink
+    if [ -L "$NGINX_SITES_ENABLED/liveweb" ]; then
+        rm "$NGINX_SITES_ENABLED/liveweb"
+    fi
+    ln -s "$NGINX_SITES_AVAILABLE/liveweb" "$NGINX_SITES_ENABLED/liveweb"
+    
+    # Remove default nginx site if it exists
+    if [ -L "$NGINX_SITES_ENABLED/default" ]; then
+        rm "$NGINX_SITES_ENABLED/default"
+    fi
+    
+    # Test Nginx configuration
+    echo "🧪 Testing Nginx configuration..."
+    nginx -t || {
+        echo "❌ Nginx configuration test failed!"
+        exit 1
+    }
+    
+    # Reload Nginx
+    echo "🔄 Reloading Nginx..."
+    systemctl reload nginx
 fi
-
-sed "s/YOUR_DOMAIN.com/$DOMAIN/g" "$CONFIG_SOURCE" > "$NGINX_SITES_AVAILABLE/liveweb"
-
-# Create symlink
-if [ -L "$NGINX_SITES_ENABLED/liveweb" ]; then
-    rm "$NGINX_SITES_ENABLED/liveweb"
-fi
-ln -s "$NGINX_SITES_AVAILABLE/liveweb" "$NGINX_SITES_ENABLED/liveweb"
-
-# Remove default nginx site if it exists
-if [ -L "$NGINX_SITES_ENABLED/default" ]; then
-    rm "$NGINX_SITES_ENABLED/default"
-fi
-
-# Test Nginx configuration
-echo "🧪 Testing Nginx configuration..."
-nginx -t || {
-    echo "❌ Nginx configuration test failed!"
-    exit 1
-}
-
-# Reload Nginx
-echo "🔄 Reloading Nginx..."
-systemctl reload nginx
 
 # Get SSL certificate with Certbot
 echo "🔐 Obtaining SSL certificate from Let's Encrypt..."
 echo "⚠️  Make sure your domain DNS points to this server before continuing!"
-read -p "Press Enter to continue or Ctrl+C to cancel..."
+
+# Only prompt for input if running interactively (has TTY)
+if [ -t 0 ]; then
+    read -p "Press Enter to continue or Ctrl+C to cancel..."
+fi
 
 certbot --nginx -d "$DOMAIN" -d "www.$DOMAIN" --non-interactive --agree-tos --email admin@"$DOMAIN" || {
     echo "⚠️  Certbot failed. This might be because:"
