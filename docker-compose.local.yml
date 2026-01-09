@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  liveweb-backend:
+    # Forzamos la construcción local usando el Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Usamos un nombre de imagen local para no ensuciar la del registro
+    image: liveweb-simulacion:latest
+    # IMPORTANTE: No intentar descargarla de internet
+    pull_policy: never
+    environment:
+      # Mantenemos 'production' para simular el entorno real
+      - NODE_ENV=production 
+      # Ajustamos la URL para que el navegador sepa dónde está la API en local
+      - API_BASE_URL=http://localhost:8080
+      - DOMAIN=localhost
+
+  liveweb-frontend:
+    # Mapeamos el puerto 8080 de tu Mac al 80 del contenedor
+    ports:
+      - "8080:80"
