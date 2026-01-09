@@ -44,13 +44,16 @@ services:
     networks:
       - liveweb-network
     healthcheck:
-      # BusyBox wget syntax (nginx:alpine uses BusyBox, not GNU wget)
-      # --spider: Only check URL existence, don't download
-      # -q: Quiet mode
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      # Verificar que nginx puede hacer proxy al backend
+      # Usamos curl (disponible en nginx:alpine) en lugar de wget
+      # -f: Fail silently on server errors (returns non-zero on HTTP errors)
+      # -s: Silent mode
+      # --max-time: Maximum time allowed for the transfer
+      test: ["CMD", "curl", "-f", "-s", "--max-time", "3", "http://localhost/health"]
       interval: 30s
-      timeout: 3s
+      timeout: 5s
       retries: 3
+      start_period: 10s
 
 networks:
   liveweb-network:
