@@ -33,11 +33,14 @@ services:
     ports:
       - "${FRONTEND_PORT:-80}:80"
     volumes:
-      - ./frontend/dist:/usr/share/nginx/html:ro
+      # AQUÍ ESTÁ EL CAMBIO:
+      # Ya NO montamos ./frontend/dist porque esa carpeta no existe en el servidor.
+      # Solo montamos la configuración de Nginx.
       - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infrastructure/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - liveweb-backend
+      liveweb-backend:
+        condition: service_healthy
     networks:
       - liveweb-network
     healthcheck:

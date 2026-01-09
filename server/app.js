@@ -26,35 +26,13 @@ app.get('/health', (req, res) => {
 app.use('/api', routes);
 
 // Serve static files from frontend/dist in production
+// The frontend/dist is packaged INSIDE the Docker image by the Dockerfile
 if (process.env.NODE_ENV === 'production') {
   // Use absolute path from app root (/app) - process.cwd() should be /app in Docker
   const frontendDistPath = path.join(process.cwd(), 'frontend', 'dist');
   
   // Verify path exists and log for debugging
-  if (!fs.existsSync(frontendDistPath)) {
-    console.warn(`⚠️  Frontend dist not found at: ${frontendDistPath}`);
-    console.warn(`   Current working directory: ${process.cwd()}`);
-    console.warn(`   __dirname: ${__dirname}`);
-    console.warn(`   Trying alternative path: ${path.join(__dirname, '../../frontend/dist')}`);
-    
-    // Fallback to relative path
-    const fallbackPath = path.join(__dirname, '../../frontend/dist');
-    if (fs.existsSync(fallbackPath)) {
-      console.log(`✅ Using fallback path: ${fallbackPath}`);
-      app.use(express.static(fallbackPath));
-      
-      // SPA fallback - serve index.html for all non-API routes
-      app.get('*', (req, res) => {
-        // Skip API and health routes
-        if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
-          return res.status(404).json({ error: 'Endpoint not found' });
-        }
-        res.sendFile(path.join(fallbackPath, 'index.html'));
-      });
-    } else {
-      console.error(`❌ Frontend dist not found in either location!`);
-    }
-  } else {
+  if (fs.existsSync(frontendDistPath)) {
     console.log(`✅ Serving frontend from: ${frontendDistPath}`);
     app.use(express.static(frontendDistPath));
     
@@ -66,6 +44,10 @@ if (process.env.NODE_ENV === 'production') {
       }
       res.sendFile(path.join(frontendDistPath, 'index.html'));
     });
+  } else {
+    console.error(`❌ Frontend dist not found at: ${frontendDistPath}`);
+    console.error(`   Current working directory: ${process.cwd()}`);
+    console.error(`   This should not happen if the Docker image was built correctly.`);
   }
 } else {
   // In development, mount API routes at root for backward compatibility
