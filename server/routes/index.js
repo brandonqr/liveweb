@@ -9,11 +9,13 @@ import apisRouter from './apis.js';
 const router = express.Router();
 
 // Mount routes
-router.use('/', healthRouter);
-router.use('/api/logs', logsRouter);
-router.use('/api/generate', generateRouter);
-router.use('/api/checkpoints', checkpointsRouter);
-router.use('/api/templates', templatesRouter);
-router.use('/api/apis', apisRouter);
+// Note: These routes are mounted at /api in server/app.js
+// So /logs becomes /api/logs, /templates becomes /api/templates, etc.
+// Health is mounted directly in app.js at /health, so we don't include it here
+router.use('/logs', logsRouter);
+router.use('/generate', generateRouter);
+router.use('/checkpoints', checkpointsRouter);
+router.use('/templates', templatesRouter);
+router.use('/apis', apisRouter);
 
 export default router;
