@@ -231,4 +231,3 @@ jobs:
           else
             echo "Frontend: http://${{ secrets.SERVER_IP }}"
           fi
-§231§
